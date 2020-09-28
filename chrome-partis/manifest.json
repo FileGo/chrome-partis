@@ -1,0 +1,13 @@
+{
+    "name": "chrome-partis",
+    "version": "0.0.1",
+    "description": "Partis search filter",
+    "permissions": ["storage"],
+    "manifest_version": 2,
+    "content_scripts": [{
+        "matches": ["*://*.partis.si/*"],
+        "js": ["content.js"],
+        "run_at": "document_end"
+      }],
+    "options_page": "options.html"
+  }
