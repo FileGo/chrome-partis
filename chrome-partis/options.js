@@ -1,6 +1,6 @@
 let table = document.getElementById('filters');
 
-var filters = {
+var filtersAvailable = {
     "ot_chk40": "Blu-ray 1080p/i",
     "ot_chk42": "Blu-ray 720p/i",
     "ot_chk43": "Blu-ray B-Disc",
@@ -62,12 +62,12 @@ var filters = {
 
 var nCols = 3;
 let rows = [];
+var filtersStorage = {};
 
-function constructOptions(filters) {
-    keys = Object.keys(filters); // Retrieve filter codes
+function constructOptions(filtersAvlb) {
+    keys = Object.keys(filtersAvlb); // Retrieve filter codes
     for (i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        //console.log(key);
+        let key = keys[i];
 
         let row;
         // Check if new row is required
@@ -86,34 +86,15 @@ function constructOptions(filters) {
         checkbox.setAttribute("type", "checkbox");
         checkbox.name = key;
         checkbox.id = checkbox.name;
-        checkbox.addEventListener('click', function() {
-            chrome.storage.sync.set({[checkbox.name]: checkbox.checked}, function() {
-                if(chrome.runtime.lastError != null) {
-                    console.log("Error: " + chrome.runtime.lastError);
-                } else {
-                    //console.log("Value of " + key + " stored as: " + checkbox.checked + ".")
-                }
-            });
-        });
-
+       
         // Create label
         let label = document.createElement('label');
-        label.textContent = filters[key];
+        label.textContent = filtersAvlb[[key]];
         label.htmlFor = checkbox.name;
 
-        // Read current setting and set checkbox
-        chrome.storage.sync.get(key, function(result) {
-            if(chrome.runtime.lastError != null) {
-                console.log("Error: " + chrome.runtime.lastError);
-            } else {
-                checkbox.checked = result[checkbox.name];
-                //console.log("Value of " + key + ": " + result[checkbox.name])
-            }
-        });
-
         // Append DOM elements
-        cell.appendChild(label);
         cell.appendChild(checkbox);
+        cell.appendChild(label);
 
         // Append cell to row
         row.appendChild(cell);
@@ -123,9 +104,52 @@ function constructOptions(filters) {
     for(i = 0; i < rows.length; i++) {
         table.appendChild(rows[i]);
     }
+
+    // Read filters from storage and apply them
+    chrome.storage.sync.get(['filters'], function(items) {
+        filtersStorage = JSON.parse(items.filters);
+
+        for(filterId in filtersStorage) {
+            document.getElementById(filterId).checked = filtersStorage[filterId];
+        }
+    });
 }
 
-constructOptions(filters);
-document.getElementById('close').addEventListener('click', function() {
-    window.close();
+// Save functionality
+document.getElementById('save').addEventListener('click', function() {
+    // Run through all checkboxes and check their state
+    let cboxes = this.closest('form').querySelectorAll('input[type="checkbox"]');
+    let filtersStorage = {};
+
+    for(i = 0; i < cboxes.length; i++) {
+        let cbox = cboxes[i];
+        filtersStorage[[cbox.id]] = cbox.checked;
+    }
+
+    chrome.storage.sync.set({"filters": JSON.stringify(filtersStorage)}, function() {
+        if(chrome.runtime.lastError != null) {
+            console.log("Error: " + chrome.runtime.lastError.message);
+        }
+
+        window.close();
+    });
 });
+
+// Select all
+document.getElementById('selectall').addEventListener('click', function() {
+    let inputs = this.closest('form').querySelectorAll('input[type="checkbox"]');
+    for(i = 0; i < inputs.length; i++) {
+        inputs[i].checked = true;
+    }
+});
+
+// Clear all
+document.getElementById('clearall').addEventListener('click', function() {
+    let inputs = this.closest('form').querySelectorAll('input[type="checkbox"]');
+    for(i = 0; i < inputs.length; i++) {
+        inputs[i].checked = false;
+    }
+});
+
+// Construct options
+constructOptions(filtersAvailable);

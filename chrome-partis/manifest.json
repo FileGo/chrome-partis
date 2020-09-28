@@ -5,7 +5,7 @@
     "permissions": ["storage"],
     "manifest_version": 2,
     "content_scripts": [{
-        "matches": ["*://*.partis.si/*"],
+        "matches": ["*://*.partis.si/brskaj*"],
         "js": ["content.js"],
         "run_at": "document_end"
       }],
